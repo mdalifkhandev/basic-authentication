@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken')
 const cookeiPercer = require('cookie-parser')
 const crypto = require('crypto')
 const nodemailer = require('nodemailer')
+const cors =require('cors')
 
 
 const app = express()
@@ -15,6 +16,7 @@ dotenv.config()
 
 app.use(express.json())
 app.use(cookeiPercer())
+app.use(cors())
 
 
 const uri = process.env.DB
@@ -33,6 +35,7 @@ async function connectDB() {
 connectDB()
 
 //mail connection server
+
 const transport = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
@@ -128,21 +131,21 @@ app.post('/authentication_app/resend_otp/', async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString()
     otpStore = otp
 
-        try {
-      await transport.sendMail({
-        from: process.env.NODE_MILER_USER,
-        to: email,
-        subject: "Your OTP Code",
-        text: `Your OTP is: ${otpStore}`,
-      });
+    try {
+        await transport.sendMail({
+            from: process.env.NODE_MILER_USER,
+            to: email,
+            subject: "Your OTP Code",
+            text: `Your OTP is: ${otpStore}`,
+        });
 
-      res.json({ message: "OTP sent successfully", otp: otpStore }); // শুধু একবার response
+        res.json({ message: "OTP sent successfully", otp: otpStore }); // শুধু একবার response
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "OTP send failed", details: err.message });
+        console.error(err);
+        res.status(500).json({ error: "OTP send failed", details: err.message });
     }
+    // res.send(otpStore)
 
-    
 })
 
 
@@ -150,12 +153,12 @@ app.post('/authentication_app/resend_otp/', async (req, res) => {
 app.post('/authentication_app/verify_otp/', (req, res) => {
     const { email, otp } = req.body
 
-    const token=req.cookies.token
+    const token = req.cookies.token
 
-    const decoded=jwt.verify(token,process.env.JWT_SECRET)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    const emailMatch=email===decoded.email
-    if(!emailMatch){
+    const emailMatch = email === decoded.email
+    if (!emailMatch) {
         res.json('please login and use gmail')
     }
 
